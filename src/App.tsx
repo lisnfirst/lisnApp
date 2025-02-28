@@ -12,8 +12,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store/store';
 import { useAuth } from './hooks/useAuth';
 import { audioByteApi } from './services/api/audioByte';
-import { resetTopicDiscovery } from './store/topicsSlice';
-import { resetCommonState } from './store/commonSlice';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

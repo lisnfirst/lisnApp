@@ -83,7 +83,7 @@ export function AudioPlayer({
   const { token } = useAuth();
   const [generatedTimeText, setGeneratedTimeText] = useState('');
   const audioByteIdRef = useRef<number | null>(null);
-  const statusChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const statusChangeTimeoutRef = useRef<any>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioPlayerRef = useRef<ReactAudioPlayer>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -435,7 +435,7 @@ export function AudioPlayer({
     // Prevent scrolling while dragging
     e.preventDefault();
     
-    const touch = 'touches' in e ? e.touches[0] : e.changedTouches[0];
+    const touch: any = 'touches' in e.touches[0];
     const rect = progressBarRef.current.getBoundingClientRect();
     const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
     const percentage = x / rect.width;
