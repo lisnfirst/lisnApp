@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store/store';
 import { useAuth } from './hooks/useAuth';
 import { audioByteApi } from './services/api/audioByte';
+import logo from '../public/Lisn Logomark white.svg';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -190,16 +191,21 @@ function App() {
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-lg">
         <div className="flex items-center justify-between p-4">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 hover:bg-zinc-800/50 rounded-lg"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-2 hover:bg-zinc-800/50 rounded-lg z-10"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+          {/* Logo - Absolutely Centered */}
+          <div className="absolute inset-x-0 flex justify-center top-4">
+            <img src={logo} alt="Logo" className="w-10" />
+          </div>      
           {isAuthenticated && (
-            <CreditsDisplay onAudioGenerated={isAudioGenerated} />
+            <div className="ml-auto">
+              <CreditsDisplay onAudioGenerated={isAudioGenerated} />
+            </div>
           )}
-          <div className="w-10" /> {/* Spacer for alignment */}
         </div>
       </header>
 
@@ -207,9 +213,8 @@ function App() {
       <main className="absolute inset-0 pt-20 px-4 pb-24 overflow-y-auto">
         {/* Title Section */}
         <div className="mb-8">
-          <h2 className="text-zinc-400 text-xl mb-2">Lisn to</h2>
+          <h2 className="text-zinc-400 text-xl mb-2"></h2>
           <h1 className="text-3xl font-bold mb-4">
-            Sachin Tendulkar Life's Story
           </h1>
         </div>
 

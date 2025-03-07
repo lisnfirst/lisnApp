@@ -387,71 +387,85 @@ export function AudioPlayer({
     if (!audioPlayerRef.current || !audioPlayerRef.current.audioEl.current) return;
     
     isDraggingRef.current = true;
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
     
+    // Add event listeners for mouse move and mouse up
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
     // Prevent text selection during drag
     e.preventDefault();
-    
+
     // Initial seek
     handleMouseMove(e);
   };
-  
+
   const handleMouseMove = (e: MouseEvent | React.MouseEvent) => {
     if (!isDraggingRef.current || !progressBarRef.current || !audioPlayerRef.current?.audioEl.current) return;
-    
+
     const rect = progressBarRef.current.getBoundingClientRect();
     const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const percentage = x / rect.width;
     const newTime = percentage * audioPlayerRef.current.audioEl.current.duration;
-    
+
+    // Update audio time and UI
     audioPlayerRef.current.audioEl.current.currentTime = newTime;
     lastPlayedTimeRef.current = newTime;
     setCurrentTime(newTime);
     setProgress(percentage * 100);
   };
-  
+
   const handleMouseUp = () => {
     isDraggingRef.current = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
+    
+    // Remove event listeners after interaction ends
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
   };
-  
+
   // Touch events for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!audioPlayerRef.current || !audioPlayerRef.current.audioEl.current) return;
-    
+
     isDraggingRef.current = true;
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-    
-    // Initial seek
+
+    // Add event listeners for touch move and touch end
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd, { passive: false });
+
+    // Initial seek to avoid delay
     handleTouchMove(e);
   };
-  
+
   const handleTouchMove = (e: TouchEvent | React.TouchEvent) => {
     if (!isDraggingRef.current || !progressBarRef.current || !audioPlayerRef.current?.audioEl.current) return;
-    
+
     // Prevent scrolling while dragging
     e.preventDefault();
-    
-    const touch: any = 'touches' in e.touches[0];
+
+    const touch = "touches" in e ? e.touches[0] : (e as TouchEvent).touches[0]; // Ensure touch event is properly handled
     const rect = progressBarRef.current.getBoundingClientRect();
+    
+    // Calculate the new position within bounds
     const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
     const percentage = x / rect.width;
     const newTime = percentage * audioPlayerRef.current.audioEl.current.duration;
-    
+
+    // Update audio time and UI
     audioPlayerRef.current.audioEl.current.currentTime = newTime;
     lastPlayedTimeRef.current = newTime;
     setCurrentTime(newTime);
     setProgress(percentage * 100);
   };
-  
+
+  // Handle touch end event
   const handleTouchEnd = () => {
     isDraggingRef.current = false;
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
+
+    // Remove event listeners after interaction ends
+    document.removeEventListener("touchmove", handleTouchMove);
+    document.removeEventListener("touchend", handleTouchEnd);
   };
+
 
   // Cleanup event listeners on unmount
   useEffect(() => {
@@ -507,18 +521,19 @@ export function AudioPlayer({
       <div
         className={`fixed inset-x-0 bottom-0 z-50 transform transition-all duration-300 ease-in-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
-        } bg-black`}
+        } bg-black border-t border-b border-zinc-800`}
         style={{ height: 'calc(100% - 4rem)' }}
-      >
-        <div className="h-full flex flex-col">
-          {/* Header Section */}
-          <div className="flex-none p-4 border-b border-zinc-800">
-            <button onClick={onClose} className="mb-6">
-              <ChevronDown className="w-6 h-6" />
-            </button>
+      > 
+        <div className="h-full flex flex-col border-t-2 rounded-t-lg">
+        {/* Header Section */}
+        <div className="flex-none p-4 border-b border-zinc-800">
+          <button onClick={onClose} className="mb-6 bg-zinc-800/30 rounded-full p-2 hover:bg-zinc-700/30 transition-all border border-zinc-600">
+            <ChevronDown className="w-6 h-6 text-white" />
+          </button>
 
-            <div className="mb-4">
-              <h2 className="text-zinc-500 text-xl mb-2">Listening to</h2>
+          {/* Listening Section with full-width border */}
+          <div className="-mx-4 border-t-2 rounded-t-lg pt-4 px-4">
+            <h2 className="text-zinc-500 text-xl mb-2">Listening to</h2>
               <h1 className="text-2xl font-bold mb-2">
                 {audioByteStatus === 'processing' ? (
                   <div className="h-8">
@@ -617,11 +632,12 @@ export function AudioPlayer({
                       className="bg-purple-600 h-2 rounded-full relative"
                       style={{ width: `${progress}%` }}
                     >
-                      <div 
+                      <div
                         ref={progressHandleRef}
                         className="absolute top-1/2 right-0 w-3 h-3 bg-white rounded-full transform translate-x-1/2 -translate-y-1/2 cursor-pointer"
                         onMouseDown={handleMouseDown}
                         onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}  
                       />
                     </div>
                   </div>
