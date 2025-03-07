@@ -12,7 +12,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store/store';
 import { useAuth } from './hooks/useAuth';
 import { audioByteApi } from './services/api/audioByte';
-import logo from '../public/Lisn Logomark white.svg';
+import logo from '../public/Lisn_Logomark_white.svg';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
