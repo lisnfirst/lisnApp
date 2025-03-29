@@ -19,15 +19,26 @@ export interface TopicDiscoveryResponse {
   };
 }
 
+// Function to clean and normalize the query
+function normalizeQuery(query: string): string {
+  return query
+    .toLowerCase()
+    .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
+    .trim(); // Trim leading and trailing spaces
+}
+
 export const topicsApi = {
   discover: async (query: string, token: string): Promise<TopicDiscoveryResponse> => {
     try {
+      // Normalize the query
+      const fixedQuery = normalizeQuery(query);
+
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/topics/discover?user_query=${encodeURIComponent(query)}`,
+        `${API_CONFIG.BASE_URL}/topics/discover?user_query=${encodeURIComponent(fixedQuery)}`,
         {
           method: 'POST',
           headers: {
-            'accept': 'application/json',
+            'Accept': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
         }
@@ -38,15 +49,26 @@ export const topicsApi = {
         
         // Handle specific error cases
         if (response.status === 401) {
-          throw new Error('Authentication required');
+          throw new Error('🚫 Authentication required. Please check your token.');
         }
-        
+        if (response.status === 400) {
+          throw new Error('⚠️ Bad request. Check your query syntax.');
+        }
+
         throw new Error(errorData.detail || `Error ${response.status}: Failed to discover topics`);
       }
 
-      return response.json();
+      const data: TopicDiscoveryResponse = await response.json();
+
+
+      // Check for incorrect or missing topics
+      if (!data.data || !Array.isArray(data.data.topics)) {
+        throw new Error('❌ Invalid API response format.');
+      }
+
+      return data;
     } catch (error) {
-      console.error('Topic discovery error:', error);
+      console.error('❌ Topic discovery error:', error);
       throw error;
     }
   },

@@ -93,22 +93,28 @@ export function AudioPlayer({
   // Initialize state from audioByte when it changes
   useEffect(() => {
     if (audioByte) {
+      // Ensure topics are sorted correctly before setting state
+      const orderedTopics = [...(audioByte.selected_topics || [])].sort(
+        (a, b) => a.id - b.id // Sorting based on id instead of index
+      );
+
       setAudioByteData(audioByte);
-      setGeneratedAudioTracks(audioByte.selected_topics || []);
+      setGeneratedAudioTracks(orderedTopics);
       setAudioByteStatus(audioByte.status);
       setAudioByteTitle(audioByte.title || null);
       audioByteIdRef.current = audioByte.id;
-      
-      if (audioByte.status === 'done') {
+
+      if (audioByte.status === "done") {
         fetchAudioByteData(audioByte.id);
-      } else if (audioByte.status === 'processing') {
+      } else if (audioByte.status === "processing") {
         startProgressTracking(audioByte.id);
       }
     }
   }, [audioByte]);
 
+  // Fetch audio byte data
   const fetchAudioByteData = async (audioByteId: number) => {
-    const currentToken = token || localStorage.getItem('auth_token');
+    const currentToken = token || localStorage.getItem("auth_token");
     if (!currentToken) return;
 
     try {
@@ -118,48 +124,55 @@ export function AudioPlayer({
         {
           headers: {
             Authorization: `Bearer ${currentToken}`,
-            accept: 'application/json',
+            accept: "application/json",
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch audio byte data');
+        throw new Error("Failed to fetch audio byte data");
       }
 
       const data = await response.json();
+
       setAudioByteData(data.audio_byte);
-      setGeneratedAudioTracks(data.audio_byte.selected_topics || []);
+
+      // Ensure topics are sorted correctly before setting state
+      const orderedTopics = [...(data.audio_byte.selected_topics || [])].sort(
+        (a, b) => a.id - b.id // Sorting based on id instead of index
+      );
+
+      setGeneratedAudioTracks(orderedTopics);
       setAudioByteTitle(data.audio_byte.title || null);
-      
-      if (data.audio_byte.status === 'done') {
-        // Get the audio file URL using the new endpoint
+
+      if (data.audio_byte.status === "done") {
         try {
           const audioFileResponse = await audioByteApi.getAudioFile(audioByteId, currentToken);
           if (audioFileResponse.success && audioFileResponse.url) {
             setAudioUrl(audioFileResponse.url);
-            // Auto-play the audio once URL is available
+
+            // Delay auto-play slightly to ensure proper loading
             setTimeout(() => {
-              if (audioPlayerRef.current && audioPlayerRef.current.audioEl.current) {
-                audioPlayerRef.current.audioEl.current.play()
+              if (audioPlayerRef.current?.audioEl.current) {
+                audioPlayerRef.current.audioEl.current
+                  .play()
                   .then(() => setIsPlaying(true))
-                  .catch(err => console.error("Auto-play failed:", err));
+                  .catch((err) => console.error("Auto-play failed:", err));
               }
             }, 500);
           } else {
-            throw new Error('Failed to get audio file URL');
+            throw new Error("Failed to get audio file URL");
           }
         } catch (error) {
-          console.error('Error fetching audio file URL:', error);
+          console.error("Error fetching audio file URL:", error);
         } finally {
           setIsLoading(false);
         }
-      } else if (data.audio_byte.status === 'processing') {
-        // If still processing, continue tracking progress
+      } else if (data.audio_byte.status === "processing") {
         startProgressTracking(audioByteId);
       }
     } catch (error) {
-      console.error('Error fetching audio byte data:', error);
+      console.error("Error fetching audio byte data:", error);
       setIsLoading(false);
     }
   };
@@ -167,15 +180,18 @@ export function AudioPlayer({
   // Calculate topic start times and durations
   const getTopicTimings = () => {
     let currentTime = 0;
-    return generatedAudioTracks.map((track) => {
+  
+    // Ensure correct order
+    return generatedAudioTracks.map((track, index) => {
       const startTime = currentTime;
       const duration = track.duration || 0;
       if (typeof duration === 'number') {
         currentTime += duration;
       }
-      return { startTime, endTime: currentTime };
+      return { index, startTime, endTime: currentTime };
     });
   };
+  
 
   // Format time for display
   const formatTime = (seconds: number) => {
@@ -349,23 +365,28 @@ export function AudioPlayer({
   };
 
   const handleTopicClick = (index: number) => {
-    if (!audioPlayerRef.current || !audioPlayerRef.current.audioEl.current || audioByteStatus !== 'done') return;
-
+    if (!audioPlayerRef.current?.audioEl.current || audioByteStatus !== 'done') return;
+  
     const topicTimings = getTopicTimings();
+    
+    // Ensure correct start time lookup
+    if (index < 0 || index >= topicTimings.length) return;
+  
     const startTime = topicTimings[index].startTime;
-
+  
     audioPlayerRef.current.audioEl.current.currentTime = startTime;
     lastPlayedTimeRef.current = startTime;
     setCurrentTime(startTime);
     setProgress((startTime / (audioPlayerRef.current.audioEl.current.duration || 1)) * 100);
-    
+  
     if (!isPlaying) {
       audioPlayerRef.current.audioEl.current.play().catch(console.error);
       setIsPlaying(true);
     }
-    
+  
     setCurrentTrackIndex(index);
   };
+  
 
   // Handle progress bar interactions
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -439,8 +460,7 @@ export function AudioPlayer({
   const handleTouchMove = (e: TouchEvent | React.TouchEvent) => {
     if (!isDraggingRef.current || !progressBarRef.current || !audioPlayerRef.current?.audioEl.current) return;
 
-    // Prevent scrolling while dragging
-    e.preventDefault();
+    
 
     const touch = "touches" in e ? e.touches[0] : (e as TouchEvent).touches[0]; // Ensure touch event is properly handled
     const rect = progressBarRef.current.getBoundingClientRect();
@@ -524,7 +544,7 @@ export function AudioPlayer({
         } bg-black border-t border-b border-zinc-800`}
         style={{ height: 'calc(100% - 4rem)' }}
       > 
-        <div className="h-full flex flex-col border-t-2 rounded-t-lg">
+       <div className="h-full flex flex-col rounded-t-lg border-t border-gray-200/50">
         {/* Header Section */}
         <div className="flex-none p-4 border-b border-zinc-800">
           <button onClick={onClose} className="mb-6 bg-zinc-800/30 rounded-full p-2 hover:bg-zinc-700/30 transition-all border border-zinc-600">
@@ -532,7 +552,7 @@ export function AudioPlayer({
           </button>
 
           {/* Listening Section with full-width border */}
-          <div className="-mx-4 border-t-2 rounded-t-lg pt-4 px-4">
+          <div className="-mx-4 rounded-t-lg pt-4 px-4">
             <h2 className="text-zinc-500 text-xl mb-2">Listening to</h2>
               <h1 className="text-2xl font-bold mb-2">
                 {audioByteStatus === 'processing' ? (
